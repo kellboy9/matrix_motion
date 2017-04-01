@@ -5,3 +5,6 @@ To use an Entity Component System,
 and to be Completely Modular and have No game logic whatsoever come from the engine itself.
 All game logic, events, and configuration, should be offloaded to scripts.
 
+
+
+If you're looking for ridiculousness, look in entity.c
