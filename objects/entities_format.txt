@@ -1,0 +1,3 @@
+object_type x y
+
+(it's really not that hard)

@@ -1,0 +1,22 @@
+width
+height
+collision
+[collision map]
+object
+[numbers corresponding to which type of tile it is]
+0 = ground
+1 = block/rock/whatever
+2 = player
+3 = enemy 1
+style
+[select from one of many tilesets / color palletes]
+0 = grass (green)
+1 = rock (gray/brown)
+2 = lava (red/orange)
+3 = magic (purple)
+
+
+tiles.bmp format:
+vertically arranged by style
+horizontally arranged by type
+ground u d l r ur dl ul dr various other objects

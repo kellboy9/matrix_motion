@@ -1,0 +1,4 @@
+%room (each dialogue generator has 1 interaction per room)
+Then some text# (# means go to the next page)
+also some s|l|o|w| || text (| means half the output speed (dialogue will
+block)
