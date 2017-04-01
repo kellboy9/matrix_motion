@@ -1,0 +1,7 @@
+VERY early. Loads some hardcoded data now. Don't expect much. Very unclean
+
+The design goals of this engine are simple:
+To use an Entity Component System,
+and to be Completely Modular and have No game logic whatsoever come from the engine itself.
+All game logic, events, and configuration, should be offloaded to scripts.
+
