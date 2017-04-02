@@ -81,12 +81,13 @@ Map *new_map(const char* name, SDL_Renderer *renderer) {
 	printf("Loading entities.\n");
 	init_entities();
 	map->entities = new_list();
+	//TODO: check this input
 	char entfilename[256];	
 	strcpy(entfilename, name);
 	strcat(entfilename, ".entities");
 	FILE *entfile = fopen(entfilename, "r");
-	char entline[2048];
-	while(fgets(entline, 2048, entfile)) {
+	char entline[512];
+	while(fgets(entline, 512, entfile)) {
 		printf("Loading entity... %s\n", entline);
 		char ent_name[256];
 		int ent_x, ent_y;
@@ -125,8 +126,7 @@ void draw_map(Map *map, SDL_Renderer *renderer) {
 
 	Node *i = NULL;
 	while(i = next(map->entities, i)) {
-		Entity *ent = item(i);
-		SDL_RenderCopy(renderer, ent->draw, &(ent->anim), &(ent->pos)); //TODO: privatize entity drawing
+		draw_entity(item(i), renderer);
 	}
 }
 

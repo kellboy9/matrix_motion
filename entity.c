@@ -4,6 +4,15 @@
 
 lua_State *L; //there can be only one
 
+struct entity {
+	char *name; //used for lookup
+	SDL_Texture *draw; //graphic to draw (in memory) TODO: read from db, not local
+	SDL_Rect pos; //x, y, w, h (dst rect)
+	SDL_Rect anim; //animation frame (src rect from draw)
+	List *components; //list of components to check for, of type Component
+};
+
+
 typedef struct component Component;
 struct component {
 	int luaref;
@@ -74,6 +83,36 @@ void init_entities() {
 	//TODO: register 'locate_entity' function 
 }
 
+
+struct event {
+	char *event_name;
+	char *input_type;
+	char *input_name;
+};
+List *register_inputs(char *filename) {
+	printf("Registering from %s.\n", filename);
+	List *inputs = new_list();
+	FILE *fp = fopen(filename, "r");
+	char line[2048]; //stack hog
+	while(fgets(line, 2048, fp)) {
+		char *event_name = malloc(sizeof(char)*256); //heap hog
+		char *input_type = malloc(sizeof(char)*16);
+		char *input_name = malloc(sizeof(char)*16);
+		printf("Event: %s", line);
+		if(line[0] == '#') //skip comments
+			continue;
+		sscanf(line, "%s %s %s", event_name, input_type, input_name);
+		printf("Event confirmed: %s: %s %s\n", event_name, input_type, input_name);
+		Event *new_event = malloc(sizeof(Event));
+		new_event->event_name = event_name;
+		new_event->input_type = input_type;
+		new_event->input_name = input_name;
+		printf("Loaded event.\n");
+		add_item(inputs, new_event);
+		printf("Added to events list.\n");
+	}
+	return inputs;
+}
 
 //TODO: cache these somewhere
 Component *load_component(char *name, Entity *parent) {	
@@ -290,13 +329,6 @@ void update_components() {
 	}
 }
 
-//EVENT SYSTEM
-struct event {
-	char *event_name;
-	char *input_type;
-	char *input_name;
-};
-
 const char *get_event_from_input(List *events, const char *input_name) {
 	Node *i = NULL;
 	while(i = next(events, i)) {
@@ -308,30 +340,6 @@ const char *get_event_from_input(List *events, const char *input_name) {
 	return "";
 }
 
-List *register_inputs(char *filename) {
-	printf("Registering from %s.\n", filename);
-	List *inputs = new_list();
-	FILE *fp = fopen(filename, "r");
-	char line[2048]; //stack hog
-	while(fgets(line, 2048, fp)) {
-		char *event_name = malloc(sizeof(char)*256); //heap hog
-		char *input_type = malloc(sizeof(char)*16);
-		char *input_name = malloc(sizeof(char)*16);
-		printf("Event: %s", line);
-		if(line[0] == '#') //skip comments
-			continue;
-		sscanf(line, "%s %s %s", event_name, input_type, input_name);
-		printf("Event confirmed: %s: %s %s\n", event_name, input_type, input_name);
-		Event *new_event = malloc(sizeof(Event));
-		new_event->event_name = event_name;
-		new_event->input_type = input_type;
-		new_event->input_name = input_name;
-		printf("Loaded event.\n");
-		add_item(inputs, new_event);
-		printf("Added to events list.\n");
-	}
-	return inputs;
-}
 
 //t( be run every update cycle in main
 void dispatch_events(SDL_Event e) {
@@ -368,6 +376,9 @@ void dispatch_events(SDL_Event e) {
 	}
 }
 
+void draw_entity(Entity *ent, SDL_Renderer *renderer) {
+	SDL_RenderCopy(renderer, ent->draw, &(ent->anim), &(ent->pos));
+}
 
 void free_entities(List *entities) {
 	for(Node *ei = NULL; ei; ei = next(entities, ei)) {
@@ -385,6 +396,7 @@ void free_entities(List *entities) {
 			free(c);
 		}
 		free_list(e->components);
+		SDL_DestroyTexture(e->draw);
 		free(e);
 	}
 	free_list(entities);
