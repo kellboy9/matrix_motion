@@ -14,7 +14,6 @@ Map *new_map(const char *filename, SDL_Renderer *renderer);
 void free_map(Map *map);
 void draw_map(Map *map, SDL_Renderer *renderer);
 //accessor functions since struct is private
-const char **const collision(Map *map);
 size_t width(Map *map);
 size_t height(Map *map);
 //function functions

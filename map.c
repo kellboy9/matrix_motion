@@ -10,6 +10,7 @@ struct map {
 };
 
 Map *new_map(const char* name, SDL_Renderer *renderer) {
+	//TODO: input CHEKCING
 	char filename[256];
 	strcpy(filename, name);
 	strcat(filename, ".map");
@@ -130,10 +131,6 @@ void draw_map(Map *map, SDL_Renderer *renderer) {
 	}
 }
 
-//return immutable copy
-const char **const collision(Map *map) {
-	return (const char**)map->collision;
-}
 size_t width(Map *map) {
 	return map->width;
 }
@@ -194,7 +191,7 @@ Point *get_shortest_path(Point a, Point b, Map *map) {
 			if(pos[i].y >= height(map) || pos[i].y < 0 || pos[i].x >= width(map) || pos[i].x < 0) {
 				nosolution = 1;
 			}
-			else if(collision(map)[pos[i].y][pos[i].x] == '#') {
+			else if(map->collision[pos[i].y][pos[i].x] == '#') {
 				nosolution = 1;
 			}
 			for(ni = 0; ni < width(map)*height(map); ++ni) {

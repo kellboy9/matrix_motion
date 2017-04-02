@@ -2,7 +2,7 @@
 #include "list.h"
 #include "entity.h"
 
-lua_State *L; //there can be only one
+static lua_State *L; //there can be only one
 
 struct entity {
 	char *name; //used for lookup
@@ -12,6 +12,12 @@ struct entity {
 	List *components; //list of components to check for, of type Component
 };
 
+typedef struct event Event;
+struct event {
+	char *event_name;
+	char *input_type;
+	char *input_name;
+};
 
 typedef struct component Component;
 struct component {
@@ -23,8 +29,8 @@ struct component {
 //no global Entities list bc different levels, etc. may have different entity stores
 //but there is a global list of components and it's a hard array
 static Component **components = NULL; //init size of 2048, but will be realloced if needed
-int components_index = 0; 
-int components_max = 2048; //keep track of storage space
+static int components_index = 0; 
+static int components_max = 2048; //keep track of storage space
 Component *push_component(int ref, List *inputs, Entity *parent) {
 	if(!components) {
 		components = malloc(sizeof(Component*) * components_max);
@@ -84,12 +90,7 @@ void init_entities() {
 }
 
 
-struct event {
-	char *event_name;
-	char *input_type;
-	char *input_name;
-};
-List *register_inputs(char *filename) {
+static List *register_inputs(char *filename) {
 	printf("Registering from %s.\n", filename);
 	List *inputs = new_list();
 	FILE *fp = fopen(filename, "r");
@@ -163,7 +164,7 @@ Component *load_component(char *name, Entity *parent) {
 	return comp;
 }
 
-void set_parent(int luaref, Entity *parent) {
+static void set_parent(int luaref, Entity *parent) {
 	lua_rawgeti(L, LUA_REGISTRYINDEX, luaref); //grab the table
 	lua_newtable(L); //create 'parent' table
 
@@ -323,13 +324,14 @@ void update_component(Component *component) {
 	lua_pop(L, 1); //pop the table
 }
 
+//to be run every update cycle in main
 void update_components() {
 	for(int i = 0; i < components_index; ++i) {
 		update_component(components[i]);
 	}
 }
 
-const char *get_event_from_input(List *events, const char *input_name) {
+static const char *get_event_from_input(List *events, const char *input_name) {
 	Node *i = NULL;
 	while(i = next(events, i)) {
 		Event *ev = item(i);
@@ -340,8 +342,7 @@ const char *get_event_from_input(List *events, const char *input_name) {
 	return "";
 }
 
-
-//t( be run every update cycle in main
+//to be run in input catching loop in main
 void dispatch_events(SDL_Event e) {
 	for(int i = 0; i < components_index; ++i) {
 		lua_rawgeti(L, LUA_REGISTRYINDEX, components[i]->luaref); //pushes component table to stack
