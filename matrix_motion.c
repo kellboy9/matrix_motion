@@ -9,6 +9,16 @@
 
 //TODO:
 //implement dialogue system, handled by engine but called by scripts via a static msg() func or something
+//implement view, UI, Physics
+
+//basic in-game objects:
+//Map
+//View
+//Entity
+//Dialogue
+//UI
+//Physics {Static, Dynamic}
+
 
 int main(int argc, char** argv)
 {

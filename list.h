@@ -11,10 +11,9 @@ typedef struct node Node;
 List *new_list();
 size_t size(List *list);
 void add_item(List *list, void *item);
-void delete_item(List *list, void *item);
-//don't ask why I wrote it this way
+void delete_item(List *list, void *item); //deletes + frees Node (but not item)
 Node *next(List *list, Node *i);
 void *item(Node *i);
-void free_list(List *list); //frees list and all its elements
+void free_list(List *list); //frees list and all its Nodes
 
 #endif

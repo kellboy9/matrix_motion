@@ -10,6 +10,7 @@
 
 //module for managing the entities + handling their events
 typedef struct entity Entity;
+//TODO: privatize this struct
 struct entity {
 	char *name; //used for lookup
 	SDL_Texture *draw; //graphic to draw (in memory) TODO: read from db, not local
@@ -24,5 +25,6 @@ void dispatch_events(SDL_Event e);
 void update_components();
 Entity *new_entity(char *name, SDL_Renderer *renderer, int x, int y); 
 void init_entities();
+void free_entities(List *entities);
 
 #endif

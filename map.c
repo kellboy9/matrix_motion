@@ -110,6 +110,7 @@ void free_map(Map *map) {
 	}
 	free(map->tiles);
 	SDL_DestroyTexture(map->tiles_src);
+	free_entities(map->entities);
 	free(map);
 }
 
@@ -125,7 +126,7 @@ void draw_map(Map *map, SDL_Renderer *renderer) {
 	Node *i = NULL;
 	while(i = next(map->entities, i)) {
 		Entity *ent = item(i);
-		SDL_RenderCopy(renderer, ent->draw, &(ent->anim), &(ent->pos));
+		SDL_RenderCopy(renderer, ent->draw, &(ent->anim), &(ent->pos)); //TODO: privatize entity drawing
 	}
 }
 

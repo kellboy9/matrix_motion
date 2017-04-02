@@ -10,9 +10,10 @@ struct component {
 	List *inputs; //list of Event* structs
 	Entity *parent;
 };
+
 //no global Entities list bc different levels, etc. may have different entity stores
 //but there is a global list of components and it's a hard array
-static Component **components = NULL; //init value of 2048, but will be realloced if needed
+static Component **components = NULL; //init size of 2048, but will be realloced if needed
 int components_index = 0; 
 int components_max = 2048; //keep track of storage space
 Component *push_component(int ref, List *inputs, Entity *parent) {
@@ -22,6 +23,11 @@ Component *push_component(int ref, List *inputs, Entity *parent) {
 	if(components_index + 1 > components_max) {
 		components_max *= 2;
 		components = realloc(components, sizeof(Component*) * components_max);
+	}
+
+	if(!components) {
+		printf("Error: Allocation failed for components array!\n");
+		exit(1);
 	}
 
 	components[components_index] = malloc(sizeof(Component));
@@ -72,19 +78,23 @@ void init_entities() {
 //TODO: cache these somewhere
 Component *load_component(char *name, Entity *parent) {	
 	char script_name[256];	 //way big filename but whatever
+	if(strlen(name) + 16 > 256) {
+		printf("Error: Component name exceeds buffer length!\n");
+		return NULL;
+	}
 	strcpy(script_name, "objects/");
 	strcat(script_name, name);
 	strcat(script_name, ".lua");
 	printf("Reading %s...\n", script_name);
 	if(luaL_loadfile(L, script_name) || lua_pcall(L, 0, 0, 0)) {
-		printf("Cannot load script file for %s\n.", name);
+		printf("Error: Cannot load script file for %s\n.", name);
 	}
 
-	printf("Lua: setting metatable.\n");
+	printf("Lua: Setting metatable.\n");
 	//get the metatable
 	lua_getglobal(L, name); //get the component table, pushes it to -1
 	if(lua_isnil(L, -1)) {
-		printf("%s table is nil!\n", name);
+		printf("Error: %s table is nil!\n", name);
 	}
 	lua_pushvalue(L, -1); //get the component table again
 	lua_setfield(L, -2, "__index"); //component.__index = component; make into metatable
@@ -99,8 +109,8 @@ Component *load_component(char *name, Entity *parent) {
 	List *events = NULL;
 	lua_getfield(L, -1, "inputs");
 	if(!lua_isnil(L, -1)) {
-		printf("Script has inputs. Registering them...\n");
-		char inputs_filename[2048];
+		printf("Lua: Script has inputs. Registering them...\n");
+		char inputs_filename[256];
 		strcpy(inputs_filename, "objects/");
 		strcat(inputs_filename, name);
 		strcat(inputs_filename, ".inputs");
@@ -359,4 +369,23 @@ void dispatch_events(SDL_Event e) {
 }
 
 
-//TODO: FREE FUCNTION TO CLEAN UP THIS MESS OF ALLOCS
+void free_entities(List *entities) {
+	for(Node *ei = NULL; ei; ei = next(entities, ei)) {
+		Entity *e = item(ei);
+		for(Node *ci = NULL; ci; ci = next(e->components, ci)) {
+			Component *c = item(ci);
+			for(Node *ii = NULL; ii; ii = next(c->inputs, ii)) {
+				Event *i = item(ii);
+				free(i->event_name);
+				free(i->input_type);
+				free(i->input_name);
+				free(i);
+			}
+			free_list(c->inputs);
+			free(c);
+		}
+		free_list(e->components);
+		free(e);
+	}
+	free_list(entities);
+}
