@@ -10,18 +10,22 @@ player = {
 }
 function player:update()
 	self.health = self.health - math.random(0, 5)
-	print(self.health)
-	if self.health == 0 then
-		print("this instance is fucking dead my guy")
+	if self.health <= 0 then
+		--print("this instance is fucking dead my guy")
+		--kill it
 	end
 
 	--handle events
-	if self.input.move_up then
-		print("smash that button")
+	if self.inputs.move_up then
+		self.parent.pos.y = self.parent.pos.y - 1
 	end
-	if self.input.move_down then
-		print("like")
+	if self.inputs.move_down then
+		self.parent.pos.y = self.parent.pos.y + 1
 	end
-
-	print("mouse condition: " .. self.input.mousemotion.x .. self.input.mousemotion.y)
+	if self.inputs.move_left then
+		self.parent.pos.x = self.parent.pos.x - 1
+	end
+	if self.inputs.move_right then
+		self.parent.pos.x = self.parent.pos.x + 1
+	end
 end

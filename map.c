@@ -92,7 +92,7 @@ Map *new_map(const char* name, SDL_Renderer *renderer) {
 		int ent_x, ent_y;
 		sscanf(entline, "%s %d %d", ent_name, &ent_x, &ent_y);
 		printf("Confirm: %s at %d,%d\n", ent_name, ent_x, ent_y);
-		add_item(map->entities, new_entity_pos(ent_name, renderer, ent_x, ent_y));
+		add_item(map->entities, new_entity(ent_name, renderer, ent_x, ent_y));
 	}
 	fclose(entfile);
 	

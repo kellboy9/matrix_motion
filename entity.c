@@ -8,13 +8,14 @@ typedef struct component Component;
 struct component {
 	int luaref;
 	List *inputs; //list of Event* structs
+	Entity *parent;
 };
 //no global Entities list bc different levels, etc. may have different entity stores
 //but there is a global list of components and it's a hard array
 static Component **components = NULL; //init value of 2048, but will be realloced if needed
 int components_index = 0; 
 int components_max = 2048; //keep track of storage space
-Component *push_component(int ref, List *inputs) {
+Component *push_component(int ref, List *inputs, Entity *parent) {
 	if(!components) {
 		components = malloc(sizeof(Component*) * components_max);
 	}
@@ -26,6 +27,7 @@ Component *push_component(int ref, List *inputs) {
 	components[components_index] = malloc(sizeof(Component));
 	components[components_index]->luaref = ref;
 	components[components_index]->inputs = inputs;
+	components[components_index]->parent = parent;
 	components_index++;
 	return components[components_index-1];
 }
@@ -68,7 +70,7 @@ void init_entities() {
 
 
 //TODO: cache these somewhere
-Component *load_component(char *name) {	
+Component *load_component(char *name, Entity *parent) {	
 	char script_name[256];	 //way big filename but whatever
 	strcpy(script_name, "objects/");
 	strcat(script_name, name);
@@ -106,21 +108,52 @@ Component *load_component(char *name) {
 	}
 
 	printf("Pushing component...\n");
-	Component *comp = push_component(ref, events);//store a reference so that we can keep the stack clean
+	Component *comp = push_component(ref, events, parent);//store a reference so that we can keep the stack clean
 	lua_pop(L, 2); //pop the metatable, stack returns to 0
 	stackDump(L);
 	return comp;
 }
 
-Entity *new_entity(char *name, SDL_Renderer *renderer) {
+void set_parent(int luaref, Entity *parent) {
+	lua_rawgeti(L, LUA_REGISTRYINDEX, luaref); //grab the table
+	lua_newtable(L); //create 'parent' table
+
+	lua_newtable(L); //create 'pos' table
+	lua_pushnumber(L, parent->pos.x);
+	lua_setfield(L, -2, "x");
+	lua_pushnumber(L, parent->pos.y);
+	lua_setfield(L, -2, "y");
+	lua_pushnumber(L, parent->pos.w);
+	lua_setfield(L, -2, "w");
+	lua_pushnumber(L, parent->pos.h);
+	lua_setfield(L, -2, "h");
+	lua_setfield(L, -2, "pos");
+
+	lua_newtable(L); //create 'anim' table
+	lua_pushnumber(L, parent->anim.x);
+	lua_setfield(L, -2, "x");
+	lua_pushnumber(L, parent->anim.y);
+	lua_setfield(L, -2, "y");
+	lua_pushnumber(L, parent->anim.w);
+	lua_setfield(L, -2, "w");
+	lua_pushnumber(L, parent->anim.h);
+	lua_setfield(L, -2, "h");
+	lua_setfield(L, -2, "anim");
+
+	lua_setfield(L, -2, "parent"); //pops new table
+
+	lua_pop(L, 1); //pop the table
+}
+
+Entity *new_entity(char *name, SDL_Renderer *renderer, int x, int y) {
 	//loda name.ent
 	//move through component with fgets
 	//load_component for each component, check if loaded or not, if not, then load_component
 	//stores in entities list
 	printf("Creating new entity in memory...\n");
 	Entity *new = malloc(sizeof(Entity));
-	new->pos.x = 0;
-	new->pos.y = 0;
+	new->pos.x = x;
+	new->pos.y = y;
 	new->components = new_list();
 
 	char entpath[256];
@@ -163,8 +196,10 @@ Entity *new_entity(char *name, SDL_Renderer *renderer) {
 		strcpy(path, "objects/");
 		strcat(path, line);
 		printf("Loading component %s.\n", path);
-		Component *comp = load_component(line);
+		Component *comp = load_component(line, new);
 		printf("Component loaded. Adding to current entity...\n");
+		//inject 'parent' table
+		set_parent(comp->luaref, new);
 		add_item(new->components, comp);
 	}
 	printf("Entity component list populated.\n");
@@ -172,18 +207,63 @@ Entity *new_entity(char *name, SDL_Renderer *renderer) {
 	return new;
 }
 
-Entity *new_entity_pos(char *name, SDL_Renderer *renderer, int x, int y) {
-	Entity *new = new_entity(name, renderer);
-	new->pos.x = x;
-	new->pos.y = y;
-	return new;
-}
-
-
-void update_component(int ref) {
+void update_component(Component *component) {
 	//printf("Updating id %d.\n", ref);	
 	//stackDump(L);
-	lua_rawgeti(L, LUA_REGISTRYINDEX, ref); //grab the table
+	lua_rawgeti(L, LUA_REGISTRYINDEX, component->luaref); //grab the table
+	
+	//push parent vars
+	lua_getfield(L, -1, "parent");
+
+	lua_getfield(L, -1, "pos");
+	lua_getfield(L, -1, "x");
+	if(lua_isnumber(L, -1)) {
+		component->parent->pos.x = lua_tonumber(L, -1);	
+	}
+	lua_pop(L, 1);
+	lua_getfield(L, -1, "y");
+	if(lua_isnumber(L, -1)) {
+		component->parent->pos.y = lua_tonumber(L, -1);	
+	}
+	lua_pop(L, 1);
+	lua_getfield(L, -1, "w");
+	if(lua_isnumber(L, -1)) {
+		component->parent->pos.w = lua_tonumber(L, -1);	
+	}
+	lua_pop(L, 1);
+	lua_getfield(L, -1, "h");
+	if(lua_isnumber(L, -1)) {
+		component->parent->pos.h = lua_tonumber(L, -1);	
+	}
+	lua_pop(L, 1);
+	lua_pop(L, 1); //pop 'pos'
+
+	lua_getfield(L, -1, "anim");
+	lua_getfield(L, -1, "x");
+	if(lua_isnumber(L, -1)) {
+		component->parent->anim.x = lua_tonumber(L, -1);	
+	}
+	lua_pop(L, 1);
+	lua_getfield(L, -1, "y");
+	if(lua_isnumber(L, -1)) {
+		component->parent->anim.y = lua_tonumber(L, -1);	
+	}
+	lua_pop(L, 1);
+	lua_getfield(L, -1, "w");
+	if(lua_isnumber(L, -1)) {
+		component->parent->anim.w = lua_tonumber(L, -1);	
+	}
+	lua_pop(L, 1);
+	lua_getfield(L, -1, "h");
+	if(lua_isnumber(L, -1)) {
+		component->parent->anim.h = lua_tonumber(L, -1);	
+	}
+	lua_pop(L, 1);
+	lua_pop(L, 1); //pop 'anim'
+
+	lua_pop(L, 1); //pop parent
+
+	//call update function
 	lua_getfield(L, -1, "update");
 	lua_pushvalue(L, -2); //put the needed table at the top of the stack for the 'self' reference
 	//State, argc, retc, errfunc
@@ -196,7 +276,7 @@ void update_component(int ref) {
 
 void update_components() {
 	for(int i = 0; i < components_index; ++i) {
-		update_component(components[i]->luaref);
+		update_component(components[i]);
 	}
 }
 
@@ -269,7 +349,7 @@ void dispatch_events(SDL_Event e) {
 				lua_getfield(L, -1, ev); //get the appropriate event from inputs table
 				if(!lua_isnil(L, -1)) {
 					lua_pop(L, 1);
-					lua_pushboolean(L, 1);
+					lua_pushboolean(L, 0);
 					lua_setfield(L, -2, ev);
 				}
 			}

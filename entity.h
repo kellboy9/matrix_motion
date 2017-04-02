@@ -22,8 +22,7 @@ typedef struct event Event;
 List *register_inputs(char *filename);
 void dispatch_events(SDL_Event e);
 void update_components();
-Entity *new_entity(char *name, SDL_Renderer *renderer); 
-Entity *new_entity_pos(char *name, SDL_Renderer *renderer, int x, int y);
+Entity *new_entity(char *name, SDL_Renderer *renderer, int x, int y); 
 void init_entities();
 
 #endif

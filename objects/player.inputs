@@ -1,7 +1,4 @@
-move_up: key Up
-move_down: key Down
-move_left: key Left
-move_right: key Right
-mousemotion
-
-
+move_up key Up
+move_down key Down
+move_left key Left
+move_right key Right
