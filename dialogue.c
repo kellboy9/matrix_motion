@@ -9,10 +9,12 @@ void load_font(char *filename, SDL_Renderer *renderer) {
 		printf("Error: Loading %s fail! SDL_Error: %s\n", filename, SDL_GetError());
 	}
 	SDL_SetColorKey(s, SDL_TRUE, SDL_MapRGB(s->format, 0xFF, 0x00, 0xFF));
+
+	//this call erases the player texture for some reason.
 	font = SDL_CreateTextureFromSurface(renderer, s);
-	/*if(!font) {
+	if(!font) {
 		printf("Error: Creating font texture fail! SDL_Error: %s\n", SDL_GetError());
-	}*/
+	}
 	SDL_FreeSurface(s);
 	
 }
