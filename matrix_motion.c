@@ -6,6 +6,7 @@
 #include "map.h"
 #include "calc.h"
 #include "entity.h"
+#include "dialogue.h"
 
 //TODO:
 //implement dialogue system, handled by engine but called by scripts via a static msg() func or something
@@ -44,9 +45,12 @@ int main(int argc, char** argv)
 	SDL_RenderSetLogicalSize(renderer, 640, 400);
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
+	load_font("objects/font.bmp", renderer);
+	
 	//load game objects
 	printf("Loading game objects.\n");
 	Map *map = new_map("objects/mat", renderer);
+
 	
 	printf("Starting main loop.\n");
 	//main loop
@@ -75,6 +79,8 @@ int main(int argc, char** argv)
 		SDL_RenderClear(renderer);
 
 		draw_map(map, renderer);
+
+		//msg("WHAT THE HELL");
 
 		SDL_RenderPresent(renderer);
 	}

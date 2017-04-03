@@ -9,6 +9,7 @@ struct entity {
 	SDL_Texture *draw; //graphic to draw (in memory) TODO: read from db, not local
 	SDL_Rect pos; //x, y, w, h (dst rect)
 	SDL_Rect anim; //animation frame (src rect from draw)
+	const char *dialogue;
 	List *components; //list of components to check for, of type Component
 };
 
@@ -138,7 +139,7 @@ Component *load_component(char *name, Entity *parent) {
 	}
 	lua_pushvalue(L, -1); //get the component table again
 	lua_setfield(L, -2, "__index"); //component.__index = component; make into metatable
-	lua_newtable(L); //-1 is {}, pushes 'called' metatable to -2
+	lua_newtable(L); //-1 is {}, pushes 'component' metatable to -2
 	lua_pushvalue(L, -2); //get the metatable to the top
 	lua_setmetatable(L, -2); //metatable's copy is subsequently popped
 	//-1 is now the new table, but metatable set properly
@@ -196,10 +197,6 @@ static void set_parent(int luaref, Entity *parent) {
 }
 
 Entity *new_entity(char *name, SDL_Renderer *renderer, int x, int y) {
-	//loda name.ent
-	//move through component with fgets
-	//load_component for each component, check if loaded or not, if not, then load_component
-	//stores in entities list
 	printf("Creating new entity in memory...\n");
 	Entity *new = malloc(sizeof(Entity));
 	new->pos.x = x;
